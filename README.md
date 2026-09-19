@@ -49,7 +49,14 @@ The server exposes `GET /api/health` and verifies the PostgreSQL connection thro
 - Phase 8 durable in-app notifications and retry processing
 - Phase 9 organizer/admin dashboards with authoritative event metrics
 - Phase 10 admin platform management, moderation, and audit logging
+- Phase 11 production hardening, observability, readiness, and CI
 
 ## Remaining Future Work
 
 - Refund workflows
+
+## Operations
+
+The server validates configuration at startup and uses `CLIENT_ORIGIN` for credentialed CORS. `GET /api/health` is a lightweight liveness endpoint and `GET /api/ready` checks PostgreSQL. Responses include an `X-Request-Id`; supplied IDs are accepted only when they match a bounded safe format, otherwise a cryptographically random ID is generated. Structured request logs include method, route, status, duration, and request ID without credentials or tokens.
+
+Authentication, payment, webhook, check-in, order, and admin routes are rate-limited. JSON bodies are bounded by `JSON_BODY_LIMIT`, security headers are applied with Helmet, and SIGINT/SIGTERM perform graceful HTTP and database shutdown. CI is defined in `.github/workflows/ci.yml` and does not require production secrets.

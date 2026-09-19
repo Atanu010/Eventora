@@ -111,7 +111,9 @@ describe('login and authentication', () => {
 
     assert.equal(invalidPassword.status, 401)
     assert.equal(unknownEmail.status, 401)
-    assert.deepEqual(invalidPassword.body, unknownEmail.body)
+    assert.equal(invalidPassword.body.error.code, unknownEmail.body.error.code)
+    assert.equal(invalidPassword.body.error.message, unknownEmail.body.error.message)
+    assert.notEqual(invalidPassword.body.error.requestId, unknownEmail.body.error.requestId)
   })
 
   it('rejects missing, invalid, and expired tokens', async () => {

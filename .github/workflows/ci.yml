@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: eventora_test
+          POSTGRES_USER: eventora_test
+          POSTGRES_PASSWORD: eventora_test_password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U eventora_test -d eventora_test"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      DATABASE_URL: postgresql://eventora_test:eventora_test_password@localhost:5432/eventora_test
+      JWT_SECRET: ci-only-secret-that-is-at-least-32-characters-long
+      JWT_EXPIRES_IN: 1h
+      CLIENT_ORIGIN: http://localhost:5173
+      NODE_ENV: test
+      RAZORPAY_KEY_ID: rzp_test_ci
+      RAZORPAY_KEY_SECRET: ci-only-test-secret
+      RAZORPAY_WEBHOOK_SECRET: ci-only-webhook-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix client
+      - run: npm ci --prefix server
+      - run: npm run db:migrate
+      - run: npm run typecheck:server
+      - run: npm run typecheck:client
+      - run: npm run test:auth
+      - run: npm run test:events
+      - run: npm run test:orders
+      - run: npx tsx --test tests/payments.test.ts
+      - run: npx tsx --test tests/checkin.test.ts
+      - run: npx tsx --test tests/notifications.test.ts
+      - run: npx tsx --test tests/dashboard.test.ts
+      - run: npx tsx --test tests/admin.test.ts
+      - run: npx tsx --test tests/security.test.ts
+      - run: npm run build:server
+      - run: npm run build:client
+      - run: npm audit --audit-level=high
