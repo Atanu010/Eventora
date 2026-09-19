@@ -44,10 +44,13 @@ The server exposes `GET /api/health` and verifies the PostgreSQL connection thro
 - Phase 3 Argon2id authentication, JWT middleware, role authorization, and current-user profile
 - Phase 4 event management, public discovery, venues, and ticket-type foundations
 - Phase 5 transactional inventory reservations, orders, payment state, and ticket generation
+- Phase 6 Razorpay test-mode payment verification and webhook idempotency
+- Phase 7 server-authoritative ticket check-in
+- Phase 8 durable in-app notifications and retry processing
+- Phase 9 organizer/admin dashboards with authoritative event metrics
 
 ## Not Yet Implemented
 
 - Real payment gateway integration
 - Refunds and payment webhooks
 - QR validation API
-- Notifications and dashboards

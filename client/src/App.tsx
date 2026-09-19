@@ -13,6 +13,7 @@ import { OrderDetailPage } from './pages/OrderDetailPage'
 import { TicketsPage } from './pages/TicketsPage'
 import { CheckInPage } from './pages/CheckInPage'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { DashboardPage } from './pages/DashboardPage'
 
 function App() {
   return (
@@ -34,6 +35,9 @@ function App() {
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/tickets" element={<TicketsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route element={<OrganizerRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
             <Route element={<OrganizerRoute />}>
               <Route path="/organizer/check-in" element={<CheckInPage />} />
             </Route>
