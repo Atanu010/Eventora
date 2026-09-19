@@ -14,6 +14,8 @@ import { TicketsPage } from './pages/TicketsPage'
 import { CheckInPage } from './pages/CheckInPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { AdminRoute } from './components/AdminRoute'
 
 function App() {
   return (
@@ -31,6 +33,9 @@ function App() {
           <Route path="/events/:id" element={<EventDetailPage />} />
 
           <Route element={<ProtectedRoute />}>
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            </Route>
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/tickets" element={<TicketsPage />} />

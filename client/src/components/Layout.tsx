@@ -19,6 +19,7 @@ export function Layout() {
               <NavLink to="/tickets">My Tickets</NavLink>
               <NavLink to="/notifications">Notifications</NavLink>
               {user && (user.role === 'organizer' || user.role === 'admin') ? <NavLink to="/dashboard">Dashboard</NavLink> : null}
+              {user?.role === 'admin' ? <NavLink to="/admin/dashboard">Admin</NavLink> : null}
               {user && (user.role === 'organizer' || user.role === 'admin') ? <NavLink to="/organizer/check-in">Check-in</NavLink> : null}
               <button type="button" onClick={logout}>Sign out</button>
             </>

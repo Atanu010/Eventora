@@ -48,9 +48,8 @@ The server exposes `GET /api/health` and verifies the PostgreSQL connection thro
 - Phase 7 server-authoritative ticket check-in
 - Phase 8 durable in-app notifications and retry processing
 - Phase 9 organizer/admin dashboards with authoritative event metrics
+- Phase 10 admin platform management, moderation, and audit logging
 
-## Not Yet Implemented
+## Remaining Future Work
 
-- Real payment gateway integration
-- Refunds and payment webhooks
-- QR validation API
+- Refund workflows
