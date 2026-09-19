@@ -2,6 +2,7 @@ import type { PoolClient } from 'pg'
 import pool from '../config/database'
 import { AppError } from '../utils/errors'
 import type { AuthenticatedUser } from '../types/request'
+import { enqueueNotification } from './notification.service'
 
 interface LockedTicket {
   id: string
@@ -12,6 +13,7 @@ interface LockedTicket {
   event_organizer_id: string
   ticket_type_name: string
   attendee_name: string
+  attendee_user_id: string
 }
 
 export interface CheckInResult {
@@ -45,6 +47,14 @@ export async function checkInTicket(user: AuthenticatedUser, qrToken: string): P
       [ticket.id],
     )
     if (!updated.rows[0]) throw new AppError(409, 'TICKET_CHECK_IN_CONFLICT', 'Ticket check-in could not be completed')
+    await enqueueNotification(client, {
+      userId: ticket.attendee_user_id,
+      type: 'ticket.checked_in',
+      title: 'Ticket checked in',
+      body: `Your ticket for ${ticket.event_title} was checked in.`,
+      data: { ticketNumber: ticket.ticket_number, eventTitle: ticket.event_title },
+      dedupeKey: `ticket.checked_in:${ticket.id}`,
+    })
     await client.query('COMMIT')
     return toResult(ticket, false, updated.rows[0].used_at)
   } catch (error) {
@@ -59,7 +69,7 @@ async function lockTicketByToken(client: PoolClient, qrToken: string): Promise<L
   const result = await client.query<LockedTicket>(
     `SELECT t.id, t.ticket_number, t.status, t.used_at,
       e.title AS event_title, e.organizer_id AS event_organizer_id,
-      tt.name AS ticket_type_name, u.name AS attendee_name
+      tt.name AS ticket_type_name, u.name AS attendee_name, t.user_id AS attendee_user_id
      FROM tickets t
      JOIN order_items oi ON oi.id = t.order_item_id
      JOIN ticket_types tt ON tt.id = oi.ticket_type_id

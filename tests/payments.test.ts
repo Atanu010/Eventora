@@ -121,6 +121,11 @@ describe('Razorpay payment integration', () => {
     const verified = await request(app).post('/api/payments/verify').set(auth(buyerToken)).send({ orderId: order.id, razorpayOrderId: remoteOrderId, razorpayPaymentId: remotePaymentId, razorpaySignature: paymentSignature(order.id) })
     assert.equal(verified.status, 200)
     assert.equal(verified.body.order.status, 'confirmed')
+    const notification = await pool.query<{ type: string }>(
+      "SELECT type FROM notifications WHERE user_id = (SELECT user_id FROM orders WHERE id = $1) AND type = 'payment.captured'",
+      [order.id],
+    )
+    assert.equal(notification.rows.length, 1)
     const raw = JSON.stringify(webhookPayload(`evt_${order.id}`))
     const first = await request(app).post('/api/payments/webhook').type('application/json').set('x-razorpay-signature', createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!).update(raw).digest('hex')).send(raw)
     const second = await request(app).post('/api/payments/webhook').type('application/json').set('x-razorpay-signature', createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!).update(raw).digest('hex')).send(raw)

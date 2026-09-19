@@ -14,6 +14,7 @@ import {
 } from '../repositories/order.repository'
 import type { AuthenticatedUser } from '../types/request'
 import type { OrderView, TicketView } from '../types/order'
+import { enqueueNotification } from './notification.service'
 
 const pendingOrderLifetimeMs = 30 * 60 * 1000
 
@@ -51,6 +52,14 @@ export async function createOrder(user: AuthenticatedUser, items: Array<{ ticket
       await insertOrderItem(client, inserted.id, entry.ticketType.id, entry.item.quantity, entry.ticketType.price)
     }
     await updateOrderTotal(client, inserted.id)
+    await enqueueNotification(client, {
+      userId: user.id,
+      type: 'order.created',
+      title: 'Order created',
+      body: `Order ${orderNumber} is awaiting payment.`,
+      data: { orderId: inserted.id },
+      dedupeKey: `order.created:${inserted.id}`,
+    })
     await client.query('COMMIT')
     return (await findOrderById(inserted.id))!
   } catch (error) {
@@ -96,6 +105,14 @@ export async function cancelPendingOrder(user: AuthenticatedUser, id: string): P
       await client.query('UPDATE ticket_types SET quantity_sold = quantity_sold - $2, updated_at = NOW() WHERE id = $1', [item.ticket_type_id, item.quantity])
     }
     await updatePendingOrderToCancelled(client, id)
+    await enqueueNotification(client, {
+      userId: order.user_id,
+      type: 'order.cancelled',
+      title: 'Order cancelled',
+      body: 'Your pending order was cancelled and its ticket reservation was released.',
+      data: { orderId: id },
+      dedupeKey: `order.cancelled:${id}`,
+    })
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')
@@ -130,6 +147,14 @@ export async function confirmOrderForDevelopment(id: string): Promise<OrderView>
         })
       }
     }
+    await enqueueNotification(client, {
+      userId: order.user_id,
+      type: 'order.confirmed',
+      title: 'Tickets ready',
+      body: 'Your order is confirmed and your tickets are ready.',
+      data: { orderId: order.id },
+      dedupeKey: `order.confirmed:${order.id}`,
+    })
     await client.query('COMMIT')
     return (await findOrderById(id))!
   } catch (error) {

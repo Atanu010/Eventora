@@ -5,6 +5,7 @@ import pool from '../config/database'
 import { AppError } from '../utils/errors'
 import { findOrderById, findOrderItems, insertTicket, lockOrder } from '../repositories/order.repository'
 import { createRazorpayOrder, getRazorpayPayment, verifyPaymentSignature } from './razorpay.service'
+import { enqueueNotification } from './notification.service'
 
 interface LockedPaymentOrder {
   id: string
@@ -119,6 +120,14 @@ export async function processWebhookPayment(input: { eventType: string; provider
       if (order.status === 'pending' && order.payment_status === 'pending') {
         await client.query("UPDATE payments SET provider_payment_id = $2, status = 'failed', method = $3, failure_code = $4, failure_description = $5, updated_at = NOW() WHERE id = $1", [payment.id, paymentEntity.id, paymentEntity.method ?? null, paymentEntity.error_code ?? null, paymentEntity.error_description ?? null])
         await client.query("UPDATE orders SET payment_status = 'failed', updated_at = NOW() WHERE id = $1", [order.id])
+        await enqueueNotification(client, {
+          userId: order.user_id,
+          type: 'payment.failed',
+          title: 'Payment failed',
+          body: 'Your payment failed. You can retry payment from the existing order.',
+          data: { orderId: order.id },
+          dedupeKey: `payment.failed:${order.id}:${paymentEntity.id}`,
+        })
       }
     } else if (input.eventType === 'payment.captured') {
       assertTrustedPaymentAmount(paymentEntity, payment.amount, payment.currency, paymentEntity.order_id)
@@ -218,6 +227,14 @@ async function confirmPaymentLocked(client: import('pg').PoolClient, order: Lock
       await insertTicket(client, { orderItemId: item.id, ticketTypeId: item.ticket_type_id, userId: order.user_id, ticketNumber: `EVT-${randomBytes(7).toString('hex').toUpperCase()}`, qrToken: randomBytes(32).toString('base64url') })
     }
   }
+  await enqueueNotification(client, {
+    userId: order.user_id,
+    type: 'payment.captured',
+    title: 'Payment confirmed',
+    body: 'Payment was captured and your tickets are ready.',
+    data: { orderId: order.id },
+    dedupeKey: `payment.captured:${order.id}:${remotePayment.id}`,
+  })
 }
 
 async function markWebhookProcessed(client: import('pg').PoolClient, eventId: string): Promise<void> {

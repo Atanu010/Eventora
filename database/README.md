@@ -41,4 +41,4 @@ Ticket inventory uses `quantity` plus `quantity_sold`, constrained so sold quant
 
 Important integrity rules include role, status, non-negative monetary and quantity checks, event and sales time-window checks, unique email/slug/order/ticket identifiers, idempotency uniqueness per user, and foreign keys with deliberate restrict, set-null, or aggregate-only cascade behavior.
 
-Phase 6 integrates Razorpay test mode through server-side order creation, signature verification, webhook idempotency, and locked payment confirmation. Tickets are generated only after the Eventora backend confirms payment. Refunds, QR scanning, and notifications remain future phases.
+Phase 6 integrates Razorpay test mode through server-side order creation, signature verification, webhook idempotency, and locked payment confirmation. Phase 7 adds server-authoritative ticket check-in. Phase 8 stores durable in-app notifications with deduplicated lifecycle hooks, read state, and retry processing through `npm run notifications:process`. Tickets are generated only after the Eventora backend confirms payment. Refunds and dashboards remain future phases.

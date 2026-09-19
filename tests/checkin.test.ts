@@ -99,6 +99,11 @@ describe('ticket check-in', () => {
     const stored = await pool.query<{ status: string; used_at: string }>('SELECT status, used_at FROM tickets WHERE id = $1', [ticketId])
     assert.equal(stored.rows[0].status, 'used')
     assert.equal(Boolean(stored.rows[0].used_at), true)
+    const notification = await pool.query<{ type: string }>(
+      "SELECT type FROM notifications WHERE user_id = (SELECT user_id FROM tickets WHERE id = $1) AND type = 'ticket.checked_in'",
+      [ticketId],
+    )
+    assert.equal(notification.rows.length, 1)
   })
 
   it('reports an already-used ticket without changing used_at', async () => {

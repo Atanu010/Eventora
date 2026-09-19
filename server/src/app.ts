@@ -8,6 +8,7 @@ import ticketRouter from './routes/ticket.routes'
 import venueRouter from './routes/venue.routes'
 import paymentRouter from './routes/payment.routes'
 import { webhook } from './controllers/payment.controller'
+import notificationRouter from './routes/notification.routes'
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.use('/api/venues', venueRouter)
 app.use('/api/orders', orderRouter)
 app.use('/api/tickets', ticketRouter)
 app.use('/api/payments', paymentRouter)
+app.use('/api/notifications', notificationRouter)
 app.use(errorHandler)
 
 export default app

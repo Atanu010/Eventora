@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "npm run build && node dist/database/migrate.js",
     "db:seed": "npm run build && node dist/database/seed.js"
+    ,"notifications:process": "npm run build && node dist/jobs/process-notifications.js"
   },
   "dependencies": {
      "argon2": "^0.41.1",
