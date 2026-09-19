@@ -16,6 +16,15 @@ export interface RazorpayPaymentResponse {
   error_description?: string
 }
 
+export interface RazorpayRefundResponse {
+  id: string
+  payment_id: string
+  amount: number
+  currency: string
+  status: string
+  notes?: Record<string, string>
+}
+
 function authorizationHeader(keyId: string, keySecret: string): string {
   return `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`
 }
@@ -43,6 +52,13 @@ export async function createRazorpayOrder(amount: number, currency: string, rece
 
 export async function getRazorpayPayment(paymentId: string): Promise<RazorpayPaymentResponse> {
   return razorpayRequest<RazorpayPaymentResponse>(`/payments/${encodeURIComponent(paymentId)}`)
+}
+
+export async function createRazorpayRefund(paymentId: string, amount: number, notes: Record<string, string> = {}): Promise<RazorpayRefundResponse> {
+  return razorpayRequest<RazorpayRefundResponse>(`/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: 'POST',
+    body: JSON.stringify({ amount, notes }),
+  })
 }
 
 export function verifyPaymentSignature(orderId: string, paymentId: string, signature: string): boolean {

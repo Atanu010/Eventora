@@ -1,0 +1,6 @@
+import type { NextFunction, Request, Response } from 'express'
+import { refundOrderIdSchema, refundRequestSchema } from '../validation/refund.schemas'
+import { listRefunds, requestRefund } from '../services/refund.service'
+
+export async function create(request: Request, response: Response, next: NextFunction): Promise<void> { try { const { orderId } = refundOrderIdSchema.parse(request.params); const key = request.header('idempotency-key')?.trim(); if (!key || key.length > 100) { response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'A valid Idempotency-Key is required' } }); return }; response.status(201).json({ refund: await requestRefund(request.authUser!, orderId, refundRequestSchema.parse(request.body), key) }) } catch (error) { next(error) } }
+export async function list(request: Request, response: Response, next: NextFunction): Promise<void> { try { response.json({ data: await listRefunds(request.authUser!, refundOrderIdSchema.parse(request.params).orderId) }) } catch (error) { next(error) } }

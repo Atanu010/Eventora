@@ -46,6 +46,29 @@ export function checkInTicket(qrToken: string, accessToken: string): Promise<{
   return request('/api/tickets/check-in', accessToken, { method: 'POST', body: JSON.stringify({ qrToken }) })
 }
 
+export interface Refund {
+  id: string
+  order_id: string
+  payment_id: string
+  provider: string
+  provider_refund_id: string | null
+  amount: string
+  currency: string
+  status: string
+  reason: string | null
+  idempotency_key: string
+  created_at: string
+  updated_at: string
+}
+
+export function listRefunds(orderId: string, accessToken: string): Promise<{ data: Refund[] }> {
+  return request(`/api/orders/${orderId}/refunds`, accessToken)
+}
+
+export function requestRefund(orderId: string, accessToken: string, idempotencyKey: string, reason?: string): Promise<{ refund: Refund }> {
+  return request(`/api/orders/${orderId}/refund`, accessToken, { method: 'POST', body: JSON.stringify({ reason }), headers: { 'Idempotency-Key': idempotencyKey } })
+}
+
 async function request<T>(path: string, accessToken?: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
     ...options,

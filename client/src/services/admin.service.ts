@@ -24,3 +24,4 @@ export const moderateEvent = (token: string, id: string, status: string) => requ
 export const listOrders = (token: string, query: string) => request<Page<AdminOrder>>(`/api/admin/orders?${query}`, token)
 export const listTickets = (token: string, query: string) => request<Page<AdminTicket>>(`/api/admin/tickets?${query}`, token)
 export const listAuditLogs = (token: string, query: string) => request<Page<AuditLog>>(`/api/admin/audit-logs?${query}`, token)
+export const processAdminRefund = (token: string, orderId: string, idempotencyKey: string) => request<{ refund: { id: string; status: string; amount: string; currency: string } }>(`/api/admin/orders/${orderId}/refund`, token, { method: 'POST', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify({ reason: 'Admin-initiated refund' }) })

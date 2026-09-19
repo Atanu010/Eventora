@@ -119,7 +119,7 @@ export async function listAuditLogs(page: number, limit: number, action?: string
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const count = await pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM audit_logs a ${where}`, values)
   values.push(limit, (page - 1) * limit)
-  const rows = await pool.query<AuditLogView>(`SELECT a.id, a.admin_user_id, u.name AS admin_name, a.action, a.entity_type, a.entity_id, a.metadata, a.created_at FROM audit_logs a JOIN users u ON u.id = a.admin_user_id ${where} ORDER BY a.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`, values)
+  const rows = await pool.query<AuditLogView>(`SELECT a.id, COALESCE(a.actor_user_id, a.admin_user_id) AS admin_user_id, u.name AS admin_name, a.action, a.entity_type, a.entity_id, a.metadata, a.created_at FROM audit_logs a JOIN users u ON u.id = COALESCE(a.actor_user_id, a.admin_user_id) ${where} ORDER BY a.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`, values)
   return pageResult(rows.rows.map((row) => ({ ...row, created_at: dateValue(row.created_at)! })), Number(count.rows[0].count), page, limit)
 }
 

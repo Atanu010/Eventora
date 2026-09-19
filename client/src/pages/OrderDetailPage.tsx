@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getOrder, initializePayment, listOrderTickets, verifyPayment } from '../services/order.service'
+import { getOrder, initializePayment, listOrderTickets, listRefunds, requestRefund, verifyPayment } from '../services/order.service'
 import type { Order, Ticket } from '../types/order'
+import type { Refund } from '../services/order.service'
 
 export function OrderDetailPage() {
   const { id } = useParams()
@@ -13,6 +14,8 @@ export function OrderDetailPage() {
   const [error, setError] = useState('')
   const [paying, setPaying] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState('')
+  const [refunds, setRefunds] = useState<Refund[]>([])
+  const [refunding, setRefunding] = useState(false)
 
   const orderId = id ?? ''
 
@@ -23,12 +26,14 @@ export function OrderDetailPage() {
       setLoading(true)
       setError('')
       try {
-        const [orderResult, ticketsResult] = await Promise.all([
+        const [orderResult, ticketsResult, refundResult] = await Promise.all([
           getOrder(orderId, token),
           listOrderTickets(orderId, token),
+          listRefunds(orderId, token),
         ])
         setOrder(orderResult)
         setTickets(ticketsResult.data)
+        setRefunds(refundResult.data)
       } catch (requestError) {
         setError(requestError instanceof Error ? requestError.message : 'Unable to load order')
       } finally {
@@ -38,6 +43,20 @@ export function OrderDetailPage() {
 
     void load()
   }, [accessToken, orderId])
+
+  async function handleRefund(): Promise<void> {
+    if (!order || !accessToken || !window.confirm('Request a full refund for this order?')) return
+    setRefunding(true)
+    setError('')
+    try {
+      const result = await requestRefund(order.id, accessToken, crypto.randomUUID(), 'Customer requested refund')
+      setRefunds((current) => [result.refund, ...current])
+      setOrder({ ...order, status: 'refunded', payment_status: 'refunded' })
+      setTickets((current) => current.map((ticket) => ({ ...ticket, status: 'cancelled' })))
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Unable to request refund')
+    } finally { setRefunding(false) }
+  }
 
   async function handlePayment(): Promise<void> {
     if (!order || !accessToken) return
@@ -90,6 +109,8 @@ export function OrderDetailPage() {
       <p>Status: {order.status}</p>
       <p>Payment: {order.payment_status}</p>
       <p>Total: {formatMoney(order.total_amount)}</p>
+      {refunds.map((refund) => <p key={refund.id} className={refund.status === 'processed' ? 'success' : 'muted'}>Refund: {refund.status} {formatMoney(refund.amount)}</p>)}
+      {order.status === 'confirmed' && order.payment_status === 'paid' && !refunds.some((refund) => refund.status === 'processed') && !tickets.some((ticket) => ticket.status === 'used') ? <button type="button" onClick={() => void handleRefund()} disabled={refunding}>{refunding ? 'Requesting refund...' : 'Request full refund'}</button> : null}
       {paymentMessage ? <p className="success" role="status">{paymentMessage}</p> : null}
       {order.status === 'pending' && order.payment_status === 'pending' ? (
         <button type="button" onClick={() => void handlePayment()} disabled={paying}>
