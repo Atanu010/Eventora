@@ -1,0 +1,25 @@
+{
+  "name": "eventora",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Eventora monorepo foundation",
+  "scripts": {
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build",
+    "typecheck:client": "npm --prefix client run typecheck",
+    "typecheck:server": "npm --prefix server run typecheck",
+    "db:migrate": "npm --prefix server run db:migrate",
+    "db:seed": "npm --prefix server run db:seed",
+    "test:auth": "tsx --test tests/auth.test.ts",
+    "test:events": "tsx --test tests/events.test.ts",
+    "test:orders": "tsx --test tests/orders.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.3"
+  }
+}
