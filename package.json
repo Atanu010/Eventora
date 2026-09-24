@@ -15,11 +15,14 @@
     "notifications:process": "npm --prefix server run notifications:process",
     "test:auth": "tsx --test tests/auth.test.ts",
     "test:events": "tsx --test tests/events.test.ts",
-    "test:orders": "tsx --test tests/orders.test.ts"
+    "test:orders": "tsx --test tests/orders.test.ts",
+    "deploy:client": "npm run build:client && gh-pages -d client/dist",
+    "deploy": "npm run deploy:client"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
+    "gh-pages": "^6.3.0",
     "supertest": "^7.1.4",
     "tsx": "^4.20.3"
   }
