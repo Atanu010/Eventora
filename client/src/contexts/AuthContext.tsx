@@ -3,6 +3,8 @@ import { getCurrentUser, login, register } from '../services/auth.service'
 import { clearStoredAuthState, readStoredAuthState, writeStoredAuthState } from '../auth'
 import type { AuthUser } from '../types/auth'
 
+import { DEMO_USERS } from '../services/demoStore'
+
 interface AuthContextValue {
   user: AuthUser | null
   accessToken: string | null
@@ -12,6 +14,7 @@ interface AuthContextValue {
   registerUser: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
+  switchDemoRole: (role: 'attendee' | 'organizer' | 'admin') => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -85,6 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [accessToken])
 
+  const switchDemoRole = useCallback((role: 'attendee' | 'organizer' | 'admin'): void => {
+    const demoUser = DEMO_USERS[role]
+    const token = `demo-token-${role}-${Date.now()}`
+    persistSession(token, demoUser)
+  }, [persistSession])
+
   const value = useMemo<AuthContextValue>(() => ({
     user,
     accessToken,
@@ -94,7 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     registerUser,
     logout,
     refreshUser,
-  }), [accessToken, isLoading, loginUser, logout, refreshUser, registerUser, user])
+    switchDemoRole,
+  }), [accessToken, isLoading, loginUser, logout, refreshUser, registerUser, switchDemoRole, user])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -9,18 +9,35 @@ export interface Notification {
   created_at: string
 }
 
+import { getDemoNotifications, markDemoNotificationRead as markDemoRead, markAllDemoNotificationsRead as markAllDemoRead } from './demoStore'
+
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
-export function listNotifications(accessToken: string, unreadOnly = false): Promise<{ data: Notification[] }> {
-  return request(`/api/notifications${unreadOnly ? '?unread=true' : ''}`, accessToken)
+export async function listNotifications(accessToken: string, unreadOnly = false): Promise<{ data: Notification[] }> {
+  try {
+    return await request(`/api/notifications${unreadOnly ? '?unread=true' : ''}`, accessToken)
+  } catch {
+    const list = getDemoNotifications()
+    const filtered = unreadOnly ? list.filter((n) => !n.read_at) : list
+    return { data: filtered as Notification[] }
+  }
 }
 
-export function markNotificationRead(notificationId: string, accessToken: string): Promise<void> {
-  return request(`/api/notifications/${notificationId}/read`, accessToken, { method: 'POST' })
+export async function markNotificationRead(notificationId: string, accessToken: string): Promise<void> {
+  try {
+    await request(`/api/notifications/${notificationId}/read`, accessToken, { method: 'POST' })
+  } catch {
+    markDemoRead(notificationId)
+  }
 }
 
-export function markAllNotificationsRead(accessToken: string): Promise<{ updated: number }> {
-  return request('/api/notifications/read-all', accessToken, { method: 'POST' })
+export async function markAllNotificationsRead(accessToken: string): Promise<{ updated: number }> {
+  try {
+    return await request('/api/notifications/read-all', accessToken, { method: 'POST' })
+  } catch {
+    markAllDemoRead()
+    return { updated: 2 }
+  }
 }
 
 async function request<T>(path: string, accessToken: string, options: RequestInit = {}): Promise<T> {

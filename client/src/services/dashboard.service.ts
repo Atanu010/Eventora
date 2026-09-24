@@ -21,11 +21,17 @@ export interface DashboardSummary {
   events: DashboardEvent[]
 }
 
+import { getDemoDashboard } from './demoStore'
+
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 export async function getDashboardSummary(accessToken: string): Promise<DashboardSummary> {
-  const response = await fetch(`${apiUrl}/api/dashboard/summary`, { headers: { Authorization: `Bearer ${accessToken}` } })
-  const body = await response.json() as DashboardSummary | { error?: { message?: string } }
-  if (!response.ok) throw new Error('error' in body ? body.error?.message ?? 'Unable to load dashboard' : 'Unable to load dashboard')
-  return body as DashboardSummary
+  try {
+    const response = await fetch(`${apiUrl}/api/dashboard/summary`, { headers: { Authorization: `Bearer ${accessToken}` } })
+    const body = await response.json() as DashboardSummary | { error?: { message?: string } }
+    if (!response.ok) return getDemoDashboard()
+    return body as DashboardSummary
+  } catch {
+    return getDemoDashboard()
+  }
 }

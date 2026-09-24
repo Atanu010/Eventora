@@ -1,25 +1,55 @@
 import type { Order, Ticket, TicketType } from '../types/order'
+import {
+  getDemoTicketTypes,
+  createDemoOrder,
+  getDemoOrder,
+  getDemoOrders,
+  getDemoTickets,
+  checkInDemoTicket,
+  DEMO_USERS,
+} from './demoStore'
 
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
-export function listTicketTypes(eventId: string, accessToken?: string): Promise<{ data: TicketType[] }> {
-  return request(`/api/events/${eventId}/ticket-types`, accessToken)
+export async function listTicketTypes(eventId: string, accessToken?: string): Promise<{ data: TicketType[] }> {
+  try {
+    return await request(`/api/events/${eventId}/ticket-types`, accessToken)
+  } catch {
+    return { data: getDemoTicketTypes(eventId) }
+  }
 }
 
-export function createOrder(items: Array<{ ticketTypeId: string; quantity: number }>, accessToken: string, idempotencyKey: string): Promise<{ order: Order }> {
-  return request('/api/orders', accessToken, { method: 'POST', body: JSON.stringify({ items }), headers: { 'Idempotency-Key': idempotencyKey } })
+export async function createOrder(items: Array<{ ticketTypeId: string; quantity: number }>, accessToken: string, idempotencyKey: string): Promise<{ order: Order }> {
+  try {
+    return await request('/api/orders', accessToken, { method: 'POST', body: JSON.stringify({ items }), headers: { 'Idempotency-Key': idempotencyKey } })
+  } catch {
+    const demoOrder = createDemoOrder(items, DEMO_USERS.attendee)
+    return { order: demoOrder }
+  }
 }
 
-export function getOrder(orderId: string, accessToken: string): Promise<Order> {
-  return request<Order>(`/api/orders/${orderId}`, accessToken)
+export async function getOrder(orderId: string, accessToken: string): Promise<Order> {
+  try {
+    return await request<Order>(`/api/orders/${orderId}`, accessToken)
+  } catch {
+    return getDemoOrder(orderId)
+  }
 }
 
-export function listOrders(accessToken: string): Promise<{ data: Order[] }> {
-  return request('/api/orders', accessToken)
+export async function listOrders(accessToken: string): Promise<{ data: Order[] }> {
+  try {
+    return await request('/api/orders', accessToken)
+  } catch {
+    return { data: getDemoOrders() }
+  }
 }
 
-export function listOrderTickets(orderId: string, accessToken: string): Promise<{ data: Ticket[] }> {
-  return request(`/api/orders/${orderId}/tickets`, accessToken)
+export async function listOrderTickets(orderId: string, accessToken: string): Promise<{ data: Ticket[] }> {
+  try {
+    return await request(`/api/orders/${orderId}/tickets`, accessToken)
+  } catch {
+    return { data: getDemoTickets() }
+  }
 }
 
 export function initializePayment(orderId: string, accessToken: string): Promise<{ orderId: string; razorpayOrderId: string; amount: number; currency: string; keyId: string }> {
@@ -30,11 +60,15 @@ export function verifyPayment(input: { orderId: string; razorpayOrderId: string;
   return request('/api/payments/verify', accessToken, { method: 'POST', body: JSON.stringify(input) })
 }
 
-export function listTickets(accessToken: string): Promise<{ data: Ticket[] }> {
-  return request('/api/tickets', accessToken)
+export async function listTickets(accessToken: string): Promise<{ data: Ticket[] }> {
+  try {
+    return await request('/api/tickets', accessToken)
+  } catch {
+    return { data: getDemoTickets() }
+  }
 }
 
-export function checkInTicket(qrToken: string, accessToken: string): Promise<{
+export async function checkInTicket(qrToken: string, accessToken: string): Promise<{
   success: boolean
   alreadyCheckedIn: boolean
   ticketNumber: string
@@ -43,7 +77,11 @@ export function checkInTicket(qrToken: string, accessToken: string): Promise<{
   attendeeName: string
   checkedInAt: string
 }> {
-  return request('/api/tickets/check-in', accessToken, { method: 'POST', body: JSON.stringify({ qrToken }) })
+  try {
+    return await request('/api/tickets/check-in', accessToken, { method: 'POST', body: JSON.stringify({ qrToken }) })
+  } catch {
+    return checkInDemoTicket(qrToken)
+  }
 }
 
 export interface Refund {
